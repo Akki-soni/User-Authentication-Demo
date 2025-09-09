@@ -2,6 +2,7 @@ import User from "../models/userModels.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import sendingEmail from "../utils/sendingEmail.js";
+import jwt from "jsonwebtoken";
 
 const registerUser = async (req, res) => {
   const { email, name, password } = req.body;
@@ -132,12 +133,37 @@ const loginUser = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
 
-    if (isMatch) {
+    if (!isMatch) {
       return res.status(401).json({
         message: "Email and Password are Invalid",
         success: false,
       });
     }
+
+    const jwtToken = jwt.sign(
+      { email: email, _id: user._id },
+      process.env.JWT_SECRET
+    );
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+      maxAge: 1000 * 60 * 60 * 24,
+    };
+
+    res.cookie("token", jwtToken, cookieOptions);
+
+    return res.status(200).json({
+      message: "User Login Successfully",
+      success: true,
+      user: {
+        name: user.name,
+        email: user.email,
+        isVerified: user.isVerified,
+        role: user.role,
+        _id: user._id,
+      },
+    });
   } catch (error) {
     console.log("Internal Server Error", error);
     return res.status(500).json({
