@@ -143,6 +143,7 @@ const loginUser = async (req, res) => {
     const jwtToken = jwt.sign(
       { email: email, _id: user._id },
       process.env.JWT_SECRET
+      // { expiresIn: "1h" }
     );
 
     const cookieOptions = {
@@ -174,8 +175,37 @@ const loginUser = async (req, res) => {
   }
 };
 
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findOne({
+      email: req.user.email,
+      _id: req.user._id,
+    }).select("-password");
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User not LoggedIn",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Get Profile Successfully",
+      success: true,
+      user: user,
+    });
+  } catch (error) {
+    console.log("Internal Server Error", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 const logoutUser = async (req, res) => {
   const { name, email, password } = req.body;
 };
 
-export { registerUser, loginUser, logoutUser, isVerify };
+export { registerUser, loginUser, logoutUser, isVerify, getProfile };
