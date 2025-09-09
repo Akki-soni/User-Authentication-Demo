@@ -112,7 +112,40 @@ const isVerify = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(401).json({
+      message: "All Fields are Required",
+      success: false,
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not Found",
+        success: false,
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (isMatch) {
+      return res.status(401).json({
+        message: "Email and Password are Invalid",
+        success: false,
+      });
+    }
+  } catch (error) {
+    console.log("Internal Server Error", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      success: false,
+      error: error.message,
+    });
+  }
 };
 
 const logoutUser = async (req, res) => {
