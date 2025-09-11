@@ -204,8 +204,65 @@ const getProfile = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(401).json({
+      message: "Email is Required",
+      success: false,
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email }).select("-password");
+    if (!user) {
+      return res.status(404).json({
+        message: "User Not Found",
+        success: false,
+      });
+    }
+
+    const token = crypto.randomBytes(30).toString("hex");
+
+    user.resetVerificationToken = token;
+    user.resetVerificationExpiry = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    const options = {
+      email: email,
+      subject: "Reset Password",
+      route: "reset-password",
+      token: token,
+    };
+
+    await sendingEmail(options);
+
+    return res.status(200).json({
+      message: "Forgot Password Successfully",
+      success: true,
+      user: user,
+    });
+  } catch (error) {
+    console.log("Internal Server Error", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 const logoutUser = async (req, res) => {
   const { name, email, password } = req.body;
 };
 
-export { registerUser, loginUser, logoutUser, isVerify, getProfile };
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  isVerify,
+  getProfile,
+  forgotPassword,
+};
