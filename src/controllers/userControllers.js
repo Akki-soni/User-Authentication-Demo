@@ -254,6 +254,51 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+const resetPassword = async (req, res) => {
+  try {
+    const token = req.params?.token;
+    const { password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({
+        message: "Invalid token or Password",
+        success: false,
+      });
+    }
+
+    const user = await User.findOne({ resetVerificationToken: token });
+    if (!user || user.resetVerificationExpiry < Date.now()) {
+      return res.status(404).json({
+        message: "Invalid Token",
+        success: false,
+      });
+    }
+
+    const hashPassword = await bcrypt.hash(password, 10);
+    user.password = hashPassword;
+    user.resetVerificationToken = undefined;
+    user.resetVerificationExpiry = undefined;
+    return res.status(200).json({
+      message: "Reset Password Successfully",
+      success: true,
+      user: {
+        name: user.name,
+        email: user.email,
+        isVerified: user.isVerified,
+        role: user.role,
+        _id: user._id,
+      },
+    });
+  } catch (error) {
+    console.log("Internal Server Error", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 const logoutUser = async (req, res) => {
   const { name, email, password } = req.body;
 };
@@ -265,4 +310,5 @@ export {
   isVerify,
   getProfile,
   forgotPassword,
+  resetPassword,
 };

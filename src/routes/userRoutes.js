@@ -1,4 +1,5 @@
 import {
+  resetPassword,
   getProfile,
   isVerify,
   loginUser,
@@ -16,6 +17,6 @@ userRoutes.post("/verify/:token", isVerify);
 userRoutes.post("/login", loginUser);
 userRoutes.get("/profile", userLoggedIn, getProfile);
 userRoutes.post("/forgot-password", forgotPassword);
-userRoutes.post("/reset-password", forgotPassword);
+userRoutes.post("/reset-password/:token", resetPassword);
 
 export default userRoutes;
