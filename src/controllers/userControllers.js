@@ -278,6 +278,8 @@ const resetPassword = async (req, res) => {
     user.password = hashPassword;
     user.resetVerificationToken = undefined;
     user.resetVerificationExpiry = undefined;
+
+    await user.save();
     return res.status(200).json({
       message: "Reset Password Successfully",
       success: true,
@@ -300,7 +302,19 @@ const resetPassword = async (req, res) => {
 };
 
 const logoutUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  try {
+    res.status(200).cookie("token", "").json({
+      message: "User Logout Successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.log("Internal Server Error", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      success: false,
+      error: error.message,
+    });
+  }
 };
 
 export {
